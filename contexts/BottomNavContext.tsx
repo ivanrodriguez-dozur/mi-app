@@ -1,6 +1,6 @@
-﻿import React from 'react';
+import React from 'react';
 
-export type BottomNavKey = 'home' | 'shop' | 'add' | 'messages' | 'profile';
+export type BottomNavKey = 'boom' | 'shop' | 'add' | 'messages' | 'profile';
 
 type BottomNavContextValue = {
   selected: BottomNavKey;
@@ -10,7 +10,7 @@ type BottomNavContextValue = {
 const BottomNavContext = React.createContext<BottomNavContextValue | undefined>(undefined);
 
 export const BottomNavProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [selected, setSelected] = React.useState<BottomNavKey>('profile');
+  const [selected, setSelected] = React.useState<BottomNavKey>('boom');
 
   const value = React.useMemo(() => ({ selected, setSelected }), [selected]);
 
@@ -26,3 +26,5 @@ export function useBottomNav() {
   }
   return context;
 }
+
+

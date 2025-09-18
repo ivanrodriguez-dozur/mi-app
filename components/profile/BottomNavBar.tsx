@@ -1,4 +1,4 @@
-﻿import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
@@ -12,8 +12,8 @@ type BottomNavBarProps = {
   onSelect?: (key: BottomNavKey) => boolean | void;
 };
 
-const icons: Array<{ key: BottomNavKey; icon: React.ReactElement }> = [
-  { key: 'home', icon: <Ionicons name="home" size={ICON_SIZE} /> },
+const icons: { key: BottomNavKey; icon: React.ReactElement<any> }[] = [
+  { key: 'boom', icon: <Ionicons name="flame" size={ICON_SIZE} /> },
   { key: 'shop', icon: <MaterialIcons name="shopping-cart" size={ICON_SIZE} /> },
   { key: 'add', icon: <Ionicons name="add-circle" size={ICON_SIZE} /> },
   { key: 'messages', icon: <MaterialIcons name="mail" size={ICON_SIZE} /> },
@@ -46,7 +46,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({ onSelect }) => {
         case 'add':
           router.push('/modal');
           break;
-        case 'home':
+        case 'boom':
           router.push('/(tabs)');
           break;
         case 'profile':
@@ -78,7 +78,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({ onSelect }) => {
             activeOpacity={0.85}
             style={[styles.iconContainer, isSelected && { backgroundColor: highlightColor }]}
           >
-            {React.cloneElement(icon, { color: iconColor, size: iconSize })}
+            {React.cloneElement(icon as any, { color: iconColor, size: iconSize })}
           </TouchableOpacity>
         );
       })}
@@ -112,3 +112,4 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
 });
+

@@ -31,7 +31,10 @@ export type FollowerItem = {
 export default function NewFollowersScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const data = Array.isArray(params.data) ? params.data : (params.data ?? []);
+  // params.data can be a string or string[] depending on navigation; normalize to an array
+  const rawData = Array.isArray(params.data) ? params.data : (params.data ? [params.data] : []);
+  // For now assume callers pass serialized follower objects or real objects; coerce to the expected shape
+  const data = (rawData as unknown as FollowerItem[]);
   return (
     <View style={styles.container}>
       <View style={styles.headerRow}>

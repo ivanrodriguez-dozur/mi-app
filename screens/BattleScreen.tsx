@@ -2,16 +2,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
-    Animated,
-    Dimensions,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Animated,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface VoteReaction {
   id: string;
@@ -66,7 +63,7 @@ export default function BattleScreen() {
     pulse.start();
 
     return () => pulse.stop();
-  }, []);
+  }, [pulseAnim]);
 
   const handlePlayerSelect = (player: '1' | '2') => {
     if (hasVoted) return;

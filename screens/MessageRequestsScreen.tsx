@@ -16,6 +16,11 @@ const styles = StyleSheet.create({
   message: { color: '#444', fontSize: 15, marginBottom: 2 },
   time: { color: '#888', fontSize: 13 },
     headerActions: { flexDirection: 'row', alignItems: 'center' },
+    tabsRow: { paddingHorizontal: 12, marginBottom: 12 },
+    tab: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 18, marginRight: 8, backgroundColor: '#F5F5F5' },
+    tabActive: { backgroundColor: '#FF3366' },
+    tabLabel: { color: '#444' },
+    tabLabelActive: { color: '#fff' },
 });
 
 const demoMessages = [
@@ -102,6 +107,12 @@ export default function MessageRequestsScreen() {
   const router = useRouter();
   const [activeTab, setActiveTab] = React.useState('all');
   const filteredRequests = demoMessages; // Puedes filtrar según el tab
+  const tabs = [
+    { key: 'all', label: 'All' },
+    { key: 'primary', label: 'Primary' },
+    { key: 'general', label: 'General' },
+  ];
+
   return (
     <View style={styles.container}>
       {/* Header */}
