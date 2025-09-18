@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Appearance, ColorSchemeName } from 'react-native';
 // import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -216,5 +216,5 @@ export const useTheme = (): ThemeContextType => {
   return context;
 };
 
-export { lightColors, darkColors };
+export { darkColors, lightColors };
 export type { ColorScheme, ThemeSettings };

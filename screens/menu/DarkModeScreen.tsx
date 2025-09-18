@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Switch, StyleSheet } from 'react-native';
+import { StyleSheet, Switch, Text, View } from 'react-native';
 
 /**
  * Pantalla de configuración de modo oscuro

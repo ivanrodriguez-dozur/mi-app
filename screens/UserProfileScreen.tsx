@@ -5,9 +5,7 @@ import { ProfileStats } from '../components/profile/ProfileStats';
 import { FollowButton } from '../components/profile/FollowButton';
 import { ProfileTabs } from '../components/profile/ProfileTabs';
 import { ProfileContentGrid } from '../components/profile/ProfileContentGrid';
-import { BottomNavBar } from '../components/profile/BottomNavBar';
 import { ProfileActionBar } from '../components/profile/ProfileActionBar';
-import { ShopModal } from '../components/profile/ShopModal';
 import { FavoritesModal } from '../components/profile/FavoritesModal';
 import { SharedVideosModal } from '../components/profile/SharedVideosModal';
 import { useTheme } from '../contexts/ThemeContext';
@@ -49,9 +47,8 @@ export const UserProfileScreen: React.FC = () => {
   const [email, setEmail] = useState('dozurtv@example.com');
   const [isFollowing, setIsFollowing] = useState(true);
   const [selectedTab, setSelectedTab] = useState<'videos' | 'reels' | 'fotos'>('videos');
-  const [selectedNav, setSelectedNav] = useState('profile');
+  // bottom navigation is global
   const [showPublishModal, setShowPublishModal] = useState(false);
-  const [showShopModal, setShowShopModal] = useState(false);
   const [showFavoritesModal, setShowFavoritesModal] = useState(false);
   const [showSharedVideosModal, setShowSharedVideosModal] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -89,10 +86,6 @@ export const UserProfileScreen: React.FC = () => {
     }
   };
 
-  const handleShopPress = () => {
-    console.log('Abriendo shop modal');
-    setShowShopModal(true);
-  };
 
   const handleFavoritesPress = () => {
     console.log('Abriendo favorites modal');
@@ -151,7 +144,6 @@ export const UserProfileScreen: React.FC = () => {
               <FollowButton isFollowing={isFollowing} onToggleFollow={() => setIsFollowing(f => !f)} />
             )}
             <ProfileActionBar 
-              onShopPress={handleShopPress} 
               onFavoritesPress={handleFavoritesPress}
               onTournamentsPress={handleTournamentsPress}
               onSharePress={handleSharePress}
@@ -164,17 +156,7 @@ export const UserProfileScreen: React.FC = () => {
               allContent={initialContent}
             />
           </ScrollView>
-          <BottomNavBar
-            selected={selectedNav}
-            onSelect={(key) => {
-              setSelectedNav(key);
-              if (key === 'add') setShowPublishModal(true);
-            }}
-          />
-          <ShopModal 
-            visible={showShopModal} 
-            onClose={() => setShowShopModal(false)} 
-          />
+          {/* BottomNavBar is rendered globally in app/_layout.tsx */}
           <FavoritesModal 
             visible={showFavoritesModal} 
             onClose={() => setShowFavoritesModal(false)} 

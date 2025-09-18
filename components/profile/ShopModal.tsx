@@ -1,25 +1,17 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, TouchableOpacity, Modal, StyleSheet, ScrollView, Image, Alert, Animated } from 'react-native';
-import { PanGestureHandler, GestureHandlerRootView, State } from 'react-native-gesture-handler';
-import Slider from '@react-native-community/slider';
 import { Ionicons } from '@expo/vector-icons';
+import Slider from '@react-native-community/slider';
+import React, { useRef, useState } from 'react';
+import { Alert, Animated, Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { GestureHandlerRootView, PanGestureHandler, State } from 'react-native-gesture-handler';
 import { useTheme } from '../../contexts/ThemeContext';
+import { ShopCartItem, useShop } from '../../contexts/ShopContext';
 
 interface ShopModalProps {
   visible: boolean;
   onClose: () => void;
 }
 
-interface CartItem {
-  id: string;
-  name: string;
-  description: string;
-  size: string;
-  priceCOP: number;
-  priceBoomCoins: number;
-  quantity: number;
-  image: string;
-}
+type CartItem = ShopCartItem;
 
 /**
  * Modal del carrito de compras
@@ -28,38 +20,8 @@ interface CartItem {
 export const ShopModal: React.FC<ShopModalProps> = ({ visible, onClose }) => {
   const { colors, fontScale } = useTheme();
   
-  const [cartItems, setCartItems] = useState<CartItem[]>([
-    {
-      id: '1',
-      name: 'Camiseta BoomStyle',
-      description: 'Camiseta de algodón premium con diseño exclusivo',
-      size: 'M',
-      priceCOP: 89900,
-      priceBoomCoins: 45.50,
-      quantity: 2,
-      image: 'https://via.placeholder.com/80x80/1a1a2e/CCFF00?text=BS'
-    },
-    {
-      id: '2',
-      name: 'Sudadera Limited',
-      description: 'Sudadera con capucha edición limitada',
-      size: 'L',
-      priceCOP: 149900,
-      priceBoomCoins: 75.00,
-      quantity: 1,
-      image: 'https://via.placeholder.com/80x80/16213e/4FC3F7?text=SL'
-    },
-    {
-      id: '3',
-      name: 'Gorra Snapback',
-      description: 'Gorra ajustable con bordado 3D',
-      size: 'Única',
-      priceCOP: 59900,
-      priceBoomCoins: 30.00,
-      quantity: 1,
-      image: 'https://via.placeholder.com/80x80/2d1b69/CCFF00?text=GS'
-    }
-  ]);
+  const { cartItems, updateCartItemQuantity, removeFromCart, clearCart } = useShop();
+
 
   const [paymentMethod, setPaymentMethod] = useState<'cop' | 'boomcoins' | 'mixed'>('cop');
   const [copPercentage, setCopPercentage] = useState(50); // Para pago mixto
@@ -67,19 +29,15 @@ export const ShopModal: React.FC<ShopModalProps> = ({ visible, onClose }) => {
   const scrollViewRef = useRef<ScrollView>(null);
 
   const updateQuantity = (id: string, change: number) => {
-    setCartItems(items =>
-      items.map(item => {
-        if (item.id === id) {
-          const newQuantity = Math.max(0, item.quantity + change);
-          return newQuantity === 0 ? null : { ...item, quantity: newQuantity };
-        }
-        return item;
-      }).filter(Boolean) as CartItem[]
-    );
+    const item = cartItems.find((entry) => entry.id === id);
+    if (!item) {
+      return;
+    }
+    updateCartItemQuantity(id, item.quantity + change);
   };
 
   const removeItem = (id: string) => {
-    setCartItems(items => items.filter(item => item.id !== id));
+    removeFromCart(id);
   };
 
   const calculateTotal = () => {
@@ -132,7 +90,7 @@ export const ShopModal: React.FC<ShopModalProps> = ({ visible, onClose }) => {
           style: 'default',
           onPress: () => {
             Alert.alert('¡Compra Exitosa!', 'Tu pedido está siendo procesado');
-            setCartItems([]);
+            clearCart();
             onClose();
           }
         }

@@ -1,17 +1,17 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  StatusBar,
-} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import React from 'react';
+import {
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 import { BracketCard } from '../components/tournament/BracketCard';
-import { VersusCard } from '../components/tournament/VersusCard';
 import { PlayerCard } from '../components/tournament/PlayerCard';
+import { VersusCard } from '../components/tournament/VersusCard';
 
 // Mock data para las tarjetas
 const mockMatches = [

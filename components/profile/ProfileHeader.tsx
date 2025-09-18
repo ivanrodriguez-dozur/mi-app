@@ -1,13 +1,13 @@
+import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
+import { DarkModeModal } from './DarkModeModal';
+import EditProfileModal from './EditProfileModal';
 import { MenuButton } from './menu/MenuButton';
 import { ProfileMenu } from './menu/ProfileMenu';
-import EditProfileModal from './EditProfileModal';
 import { StatisticsModal } from './StatisticsModal';
-import { DarkModeModal } from './DarkModeModal';
-import { useTheme } from '../../contexts/ThemeContext';
-import { useAuth } from '../../contexts/AuthContext';
 
 interface ProfileHeaderProps {
   coverImage: string;

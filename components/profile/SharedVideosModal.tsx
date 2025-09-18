@@ -1,6 +1,6 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, Modal, StyleSheet, Image, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import React from 'react';
+import { FlatList, Image, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
 
 interface SharedVideo {

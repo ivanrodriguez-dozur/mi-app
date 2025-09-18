@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { View, Image, FlatList, ScrollView, Dimensions } from 'react-native';
+import { Dimensions, FlatList, Image, ScrollView, View } from 'react-native';
 
 const { width: screenWidth } = Dimensions.get('window');
 

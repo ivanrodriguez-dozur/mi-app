@@ -1,18 +1,18 @@
-import React, { useState, useEffect, useRef } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  FlatList,
-  StatusBar,
-  StyleSheet,
-  Dimensions,
-  Animated,
-} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { VersusCard } from '../components/tournament/VersusCard';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+    Animated,
+    Dimensions,
+    FlatList,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 import { PlayerModal } from '../components/tournament/PlayerModal';
+import { VersusCard } from '../components/tournament/VersusCard';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 

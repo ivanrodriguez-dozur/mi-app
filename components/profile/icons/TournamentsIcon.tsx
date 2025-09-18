@@ -1,6 +1,6 @@
-import React, { useEffect, useRef } from 'react';
-import { TouchableOpacity, Animated, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import React, { useEffect, useRef } from 'react';
+import { Animated, TouchableOpacity, View } from 'react-native';
 
 interface TournamentsIconProps {
   size?: number;

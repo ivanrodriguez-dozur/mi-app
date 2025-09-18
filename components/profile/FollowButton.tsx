@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { TouchableOpacity, Text, Animated } from 'react-native';
+import { Animated, Text, TouchableOpacity } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
 
 interface FollowButtonProps {

@@ -1,12 +1,10 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import { WalletIcon, ShopIcon, TournamentsIcon, ShareIcon, FavoritesIcon } from './icons';
-import { Ionicons } from '@expo/vector-icons';
+import { StyleSheet, View } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
+import { FavoritesIcon, ShareIcon, TournamentsIcon, WalletIcon } from './icons';
 
 interface ProfileActionBarProps {
   onWalletPress?: () => void;
-  onShopPress?: () => void;
   onTournamentsPress?: () => void;
   onSharePress?: () => void;
   onFavoritesPress?: () => void;
@@ -14,13 +12,12 @@ interface ProfileActionBarProps {
 }
 
 /**
- * Barra de acciones del perfil con iconos pequeños
- * Para personalizar: Modifica los iconos, tamaños o funcionalidades
- * Para agregar iconos: Importa nuevos componentes y agrégalos al JSX
+ * Barra de acciones del perfil con iconos pequenos
+ * Para personalizar: Modifica los iconos, tamanos o funcionalidades
+ * Para agregar iconos: Importa nuevos componentes y agregales al JSX
  */
 export const ProfileActionBar: React.FC<ProfileActionBarProps> = ({
   onWalletPress,
-  onShopPress,
   onTournamentsPress,
   onSharePress,
   onFavoritesPress,
@@ -36,11 +33,6 @@ export const ProfileActionBar: React.FC<ProfileActionBarProps> = ({
   const handleWalletPress = () => {
     console.log('Wallet pressed');
     onWalletPress?.();
-  };
-
-  const handleShopPress = () => {
-    console.log('Shop pressed');
-    onShopPress?.();
   };
 
   const handleSharePress = () => {
@@ -59,9 +51,8 @@ export const ProfileActionBar: React.FC<ProfileActionBarProps> = ({
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}> 
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <WalletIcon size={20} onPress={handleWalletPress} />
-      <ShopIcon size={20} onPress={handleShopPress} />
       <TournamentsIcon size={20} onPress={handleTournamentsPress} />
       <FavoritesIcon size={20} onPress={handleFavoritesPress} />
       <ShareIcon size={20} onPress={handleSharePress} />
