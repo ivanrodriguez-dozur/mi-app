@@ -52,7 +52,7 @@ export const TransferModal: React.FC<TransferModalProps> = ({
         try {
           const estimate = await estimateGas(recipient, amount);
           setGasEstimate(estimate.estimatedCost);
-        } catch (err) {
+        } catch {
           setGasEstimate(null);
         } finally {
           setIsEstimating(false);
