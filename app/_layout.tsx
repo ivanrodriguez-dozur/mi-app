@@ -1,7 +1,8 @@
 ﻿import { DarkTheme, DefaultTheme, ThemeProvider as NavigationThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
+import { Stack, SplashScreen } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useFonts } from 'expo-font';
 import 'react-native-reanimated';
 
 import { AuthProvider } from '@/contexts/AuthContext';
@@ -12,12 +13,32 @@ import { ShopProvider } from '@/contexts/ShopContext';
 import { BlockchainProvider } from '@/contexts/BlockchainContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
+// Prevent the splash screen from auto-hiding before fonts are loaded
+SplashScreen.preventAutoHideAsync();
+
 export const unstable_settings = {
   anchor: '(tabs)',
 };
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+
+  // Load Ionicons font
+  const [fontsLoaded, fontError] = useFonts({
+    'Ionicons': require('@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Ionicons.ttf'),
+  });
+
+  useEffect(() => {
+    if (fontsLoaded || fontError) {
+      // Hide the splash screen after the fonts have loaded or an error occurred
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, fontError]);
+
+  // Don't render anything until fonts are loaded
+  if (!fontsLoaded && !fontError) {
+    return null;
+  }
 
   return (
     <ThemeProvider>
