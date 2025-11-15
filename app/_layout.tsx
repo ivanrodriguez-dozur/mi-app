@@ -9,6 +9,7 @@ import { BottomNavProvider } from '@/contexts/BottomNavContext';
 import { BottomNavBar } from '@/components/profile/BottomNavBar';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { ShopProvider } from '@/contexts/ShopContext';
+import { BlockchainProvider } from '@/contexts/BlockchainContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export const unstable_settings = {
@@ -21,9 +22,10 @@ export default function RootLayout() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <ShopProvider>
-          <NavigationThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-            <BottomNavProvider>
+        <BlockchainProvider>
+          <ShopProvider>
+            <NavigationThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+              <BottomNavProvider>
               <Stack>
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                 <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
@@ -65,6 +67,7 @@ export default function RootLayout() {
             </BottomNavProvider>
           </NavigationThemeProvider>
         </ShopProvider>
+        </BlockchainProvider>
       </AuthProvider>
     </ThemeProvider>
   );
