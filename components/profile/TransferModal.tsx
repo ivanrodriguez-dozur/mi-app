@@ -169,11 +169,11 @@ export const TransferModal: React.FC<TransferModalProps> = ({
                 Recibir {tokenSymbol}
               </Text>
               <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                <Ionicons name="close" size={24} color={colors.text} />
+                <Ionicons name="close" size={24} color={colors.text || '#1e293b'} />
               </TouchableOpacity>
             </View>
             <View style={styles.content}>
-              <Text style={[styles.infoText, { color: colors.textSecondary, fontSize: 14 * fontScale }]}>
+              <Text style={[styles.infoText, { color: colors.textSecondary || '#64748b', fontSize: 14 * fontScale }]}>
                 Para recibir {tokenSymbol}, comparte tu dirección de wallet desde el menú principal de la wallet.
               </Text>
             </View>
@@ -195,14 +195,14 @@ export const TransferModal: React.FC<TransferModalProps> = ({
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <View style={[styles.overlay, { backgroundColor: 'rgba(0, 0, 0, 0.5)' }]}>
-          <View style={[styles.container, { backgroundColor: colors.background }]}>
+          <View style={[styles.container, { backgroundColor: colors.background || '#ffffff' }]}>
             {/* Header */}
-            <View style={[styles.header, { borderBottomColor: colors.border }]}>
-              <Text style={[styles.title, { color: colors.text, fontSize: 20 * fontScale }]}>
+            <View style={[styles.header, { borderBottomColor: colors.border || '#e2e8f0' }]}>
+              <Text style={[styles.title, { color: colors.text || '#1e293b', fontSize: 20 * fontScale }]}>
                 Enviar {tokenSymbol}
               </Text>
               <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                <Ionicons name="close" size={24} color={colors.text} />
+                <Ionicons name="close" size={24} color={colors.text || '#1e293b'} />
               </TouchableOpacity>
             </View>
 
@@ -313,18 +313,18 @@ export const TransferModal: React.FC<TransferModalProps> = ({
 
               {/* Gas Estimate */}
               {gasEstimate && (
-                <View style={[styles.gasEstimateBox, { backgroundColor: colors.surface }]}>
-                  <Ionicons name="flash" size={16} color={colors.textSecondary} />
-                  <Text style={[styles.gasEstimateText, { color: colors.textSecondary, fontSize: 12 * fontScale }]}>
+                <View style={[styles.gasEstimateBox, { backgroundColor: colors.surface || '#f8f9fa' }]}>
+                  <Ionicons name="flash" size={16} color={colors.textSecondary || '#64748b'} />
+                  <Text style={[styles.gasEstimateText, { color: colors.textSecondary || '#64748b', fontSize: 12 * fontScale }]}>
                     Costo estimado de gas: ~{parseFloat(gasEstimate).toFixed(6)} MATIC
                   </Text>
                 </View>
               )}
 
               {isEstimating && (
-                <View style={[styles.gasEstimateBox, { backgroundColor: colors.surface }]}>
-                  <ActivityIndicator size="small" color={colors.textSecondary} />
-                  <Text style={[styles.gasEstimateText, { color: colors.textSecondary, fontSize: 12 * fontScale }]}>
+                <View style={[styles.gasEstimateBox, { backgroundColor: colors.surface || '#f8f9fa' }]}>
+                  <ActivityIndicator size="small" color={colors.textSecondary || '#64748b'} />
+                  <Text style={[styles.gasEstimateText, { color: colors.textSecondary || '#64748b', fontSize: 12 * fontScale }]}>
                     Estimando gas...
                   </Text>
                 </View>

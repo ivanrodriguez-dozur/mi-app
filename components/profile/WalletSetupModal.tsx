@@ -83,7 +83,7 @@ export const WalletSetupModal: React.FC<WalletSetupModalProps> = ({ visible, onC
   const renderChoice = () => (
     <View style={styles.content}>
       <View style={styles.iconContainer}>
-        <Ionicons name="wallet" size={64} color={colors.accent} />
+        <Ionicons name="wallet" size={64} color={colors.accent || '#CCFF00'} />
       </View>
       
       <Text style={[styles.title, { color: colors.text, fontSize: 24 * fontScale }]}>
@@ -95,15 +95,15 @@ export const WalletSetupModal: React.FC<WalletSetupModalProps> = ({ visible, onC
       </Text>
 
       <TouchableOpacity
-        style={[styles.primaryButton, { backgroundColor: colors.accent }]}
+        style={[styles.primaryButton, { backgroundColor: colors.accent || '#CCFF00' }]}
         onPress={handleCreateWallet}
         disabled={isProcessing}
       >
         {isProcessing ? (
-          <ActivityIndicator color="#000" />
+          <ActivityIndicator color="#000000" />
         ) : (
           <>
-            <Ionicons name="add-circle" size={24} color="#000" />
+            <Ionicons name="add-circle" size={24} color="#000000" />
             <Text style={[styles.primaryButtonText, { fontSize: 16 * fontScale }]}>
               Crear Nueva Wallet
             </Text>
@@ -112,12 +112,12 @@ export const WalletSetupModal: React.FC<WalletSetupModalProps> = ({ visible, onC
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={[styles.secondaryButton, { borderColor: colors.border }]}
+        style={[styles.secondaryButton, { borderColor: colors.border || '#e2e8f0' }]}
         onPress={() => setMode('import')}
         disabled={isProcessing}
       >
-        <Ionicons name="download" size={24} color={colors.text} />
-        <Text style={[styles.secondaryButtonText, { color: colors.text, fontSize: 16 * fontScale }]}>
+        <Ionicons name="download" size={24} color={colors.text || '#1e293b'} />
+        <Text style={[styles.secondaryButtonText, { color: colors.text || '#1e293b', fontSize: 16 * fontScale }]}>
           Importar Wallet Existente
         </Text>
       </TouchableOpacity>
@@ -155,14 +155,14 @@ export const WalletSetupModal: React.FC<WalletSetupModalProps> = ({ visible, onC
         style={[styles.copyButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
         onPress={handleCopySeedPhrase}
       >
-        <Ionicons name="copy" size={20} color={colors.text} />
-        <Text style={[styles.copyButtonText, { color: colors.text, fontSize: 14 * fontScale }]}>
+        <Ionicons name="copy" size={20} color={colors.text || '#1e293b'} />
+        <Text style={[styles.copyButtonText, { color: colors.text || '#1e293b', fontSize: 14 * fontScale }]}>
           Copiar Frase Semilla
         </Text>
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={[styles.primaryButton, { backgroundColor: colors.accent }]}
+        style={[styles.primaryButton, { backgroundColor: colors.accent || '#CCFF00' }]}
         onPress={handleFinishSetup}
       >
         <Text style={[styles.primaryButtonText, { fontSize: 16 * fontScale }]}>
@@ -175,7 +175,7 @@ export const WalletSetupModal: React.FC<WalletSetupModalProps> = ({ visible, onC
   const renderImport = () => (
     <View style={styles.content}>
       <View style={styles.iconContainer}>
-        <Ionicons name="download" size={64} color={colors.accent} />
+        <Ionicons name="download" size={64} color={colors.accent || '#CCFF00'} />
       </View>
       
       <Text style={[styles.title, { color: colors.text, fontSize: 24 * fontScale }]}>
@@ -202,12 +202,12 @@ export const WalletSetupModal: React.FC<WalletSetupModalProps> = ({ visible, onC
       />
 
       <TouchableOpacity
-        style={[styles.primaryButton, { backgroundColor: colors.accent }]}
+        style={[styles.primaryButton, { backgroundColor: colors.accent || '#CCFF00' }]}
         onPress={handleImportWallet}
         disabled={isProcessing}
       >
         {isProcessing ? (
-          <ActivityIndicator color="#000" />
+          <ActivityIndicator color="#000000" />
         ) : (
           <Text style={[styles.primaryButtonText, { fontSize: 16 * fontScale }]}>
             Importar Wallet
@@ -216,11 +216,11 @@ export const WalletSetupModal: React.FC<WalletSetupModalProps> = ({ visible, onC
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={[styles.secondaryButton, { borderColor: colors.border }]}
+        style={[styles.secondaryButton, { borderColor: colors.border || '#e2e8f0' }]}
         onPress={() => setMode('choice')}
         disabled={isProcessing}
       >
-        <Text style={[styles.secondaryButtonText, { color: colors.text, fontSize: 16 * fontScale }]}>
+        <Text style={[styles.secondaryButtonText, { color: colors.text || '#1e293b', fontSize: 16 * fontScale }]}>
           Volver
         </Text>
       </TouchableOpacity>
@@ -243,7 +243,7 @@ export const WalletSetupModal: React.FC<WalletSetupModalProps> = ({ visible, onC
             </Text>
             {mode === 'choice' && (
               <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                <Ionicons name="close" size={24} color={colors.text} />
+                <Ionicons name="close" size={24} color={colors.text || '#1e293b'} />
               </TouchableOpacity>
             )}
           </View>

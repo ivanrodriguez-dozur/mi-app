@@ -218,15 +218,15 @@ export const WalletModal: React.FC<WalletModalProps> = ({ visible, onClose }) =>
               Mi Wallet
             </Text>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Ionicons name="close" size={24} color={colors.text} />
+              <Ionicons name="close" size={24} color={colors.text || '#1e293b'} />
             </TouchableOpacity>
           </View>
 
           <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
             {/* BoomCoins Balance Card */}
-            <View style={[styles.balanceCard, { backgroundColor: colors.accent }]}>
+            <View style={[styles.balanceCard, { backgroundColor: colors.accent || '#CCFF00' }]}>
               <View style={styles.balanceHeader}>
-                <Ionicons name="diamond" size={28} color="#000" />
+                <Ionicons name="diamond" size={28} color="#000000" />
                 <Text style={[styles.balanceTitle, { fontSize: 16 * fontScale }]}>
                   {tokenSymbol} Balance (Polygon)
                 </Text>
@@ -257,7 +257,7 @@ export const WalletModal: React.FC<WalletModalProps> = ({ visible, onClose }) =>
                       }
                     }}
                   >
-                    <Ionicons name="copy-outline" size={16} color="#000" />
+                    <Ionicons name="copy-outline" size={16} color="#000000" />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -265,13 +265,13 @@ export const WalletModal: React.FC<WalletModalProps> = ({ visible, onClose }) =>
 
             {/* MATIC Balance for Gas */}
             {isWalletLoaded && (
-              <View style={[styles.gasBalanceCard, { backgroundColor: colors.surface }]}>
+              <View style={[styles.gasBalanceCard, { backgroundColor: colors.surface || '#f8f9fa' }]}>
                 <View style={styles.gasBalanceRow}>
-                  <Ionicons name="flash" size={20} color={colors.text} />
-                  <Text style={[styles.gasBalanceLabel, { color: colors.textSecondary, fontSize: 14 * fontScale }]}>
+                  <Ionicons name="flash" size={20} color={colors.text || '#1e293b'} />
+                  <Text style={[styles.gasBalanceLabel, { color: colors.textSecondary || '#64748b', fontSize: 14 * fontScale }]}>
                     Balance MATIC (para gas):
                   </Text>
-                  <Text style={[styles.gasBalanceAmount, { color: colors.text, fontSize: 14 * fontScale }]}>
+                  <Text style={[styles.gasBalanceAmount, { color: colors.text || '#1e293b', fontSize: 14 * fontScale }]}>
                     {parseFloat(maticBalance).toFixed(4)} MATIC
                   </Text>
                 </View>
@@ -335,7 +335,7 @@ export const WalletModal: React.FC<WalletModalProps> = ({ visible, onClose }) =>
                     {option.description}
                   </Text>
                 </View>
-                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary || '#64748b'} />
               </TouchableOpacity>
             ))}
           </ScrollView>
