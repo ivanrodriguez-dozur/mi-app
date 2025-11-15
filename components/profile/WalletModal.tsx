@@ -1,10 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
-import React, { useState } from 'react';
-import { Alert, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { Alert, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useBlockchain } from '../../contexts/BlockchainContext';
 import { AddCardModal } from './AddCardModal';
 import { TransferModal } from './TransferModal';
+import { WalletSetupModal } from './WalletSetupModal';
 
 interface WalletModalProps {
   visible: boolean;
@@ -22,27 +24,31 @@ interface PaymentMethod {
 
 /**
  * Modal del Wallet con gestión de métodos de pago y BoomCoins
+ * Integrado con blockchain Polygon para transacciones reales
  * Funcionalidades:
- * - Agregar/editar tarjetas de crédito/débito
- * - Mostrar balance de BoomCoins
- * - Enviar/recibir BoomCoins
- * - ID criptográfico único del usuario
+ * - Mostrar balance real de tokens BMC en Polygon
+ * - Enviar/recibir tokens BMC on-chain
+ * - Dirección de wallet real en Polygon
+ * - Configuración y backup de wallet
  */
 export const WalletModal: React.FC<WalletModalProps> = ({ visible, onClose }) => {
   const { colors, fontScale } = useTheme();
+  const {
+    walletAddress,
+    isWalletLoaded,
+    tokenBalance,
+    maticBalance,
+    tokenSymbol,
+    refreshBalances,
+    getMnemonic,
+  } = useBlockchain();
   
-  // Estado del usuario y wallet
-  const [userBoomId] = useState('BC7A9F2E8D1C5B40'); // ID criptográfico único
-  const [boomCoinsBalance, setBoomCoinsBalance] = useState(1247.50);
+  // Estado del wallet setup
+  const [showWalletSetup, setShowWalletSetup] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
   // Métodos de pago del usuario
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([
-    {
-      id: '1',
-      type: 'boomcoins',
-      balance: 1247.50,
-      isDefault: true
-    },
     {
       id: '2',
       type: 'credit',
@@ -56,19 +62,87 @@ export const WalletModal: React.FC<WalletModalProps> = ({ visible, onClose }) =>
   const [showTransfer, setShowTransfer] = useState(false);
   const [transferType, setTransferType] = useState<'send' | 'receive'>('send');
 
+  // Actualizar balance cuando el modal se abre
+  useEffect(() => {
+    if (visible && isWalletLoaded && refreshBalances) {
+      refreshBalances();
+    }
+  }, [visible, isWalletLoaded, refreshBalances]);
+
+  // Mostrar setup si no hay wallet
+  useEffect(() => {
+    if (visible && !isWalletLoaded) {
+      setShowWalletSetup(true);
+    }
+  }, [visible, isWalletLoaded]);
+
   const handleAddCard = (cardData: any) => {
     setPaymentMethods([...paymentMethods, cardData]);
   };
 
-  const handleTransfer = (amount: number, recipient: string) => {
-    if (transferType === 'send') {
-      setBoomCoinsBalance(boomCoinsBalance - amount);
-    } else {
-      setBoomCoinsBalance(boomCoinsBalance + amount);
+  const handleRefreshBalance = async () => {
+    setIsRefreshing(true);
+    try {
+      await refreshBalances();
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
+  const handleViewSeedPhrase = async () => {
+    Alert.alert(
+      'Advertencia de Seguridad',
+      'Tu frase semilla es la clave de tu wallet. Nunca la compartas con nadie. ¿Deseas continuar?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Ver Frase',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const mnemonic = await getMnemonic();
+              if (mnemonic) {
+                Alert.alert(
+                  'Tu Frase Semilla',
+                  mnemonic,
+                  [
+                    {
+                      text: 'Copiar',
+                      onPress: async () => {
+                        await Clipboard.setStringAsync(mnemonic);
+                        Alert.alert('¡Copiado!', 'Frase semilla copiada al portapapeles');
+                      },
+                    },
+                    { text: 'Cerrar', style: 'cancel' },
+                  ]
+                );
+              } else {
+                Alert.alert('Error', 'No se pudo obtener la frase semilla');
+              }
+            } finally {
+              // Do nothing
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const formatAddress = (address: string) => {
+    return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
+  };
+
+  const boomCoinsBalance = parseFloat(tokenBalance || '0');
+
   const walletOptions = [
+    {
+      id: 'viewSeed',
+      title: 'Ver Frase Semilla',
+      description: 'Backup de tu wallet',
+      icon: 'key-outline',
+      color: '#EF4444',
+      onPress: handleViewSeedPhrase
+    },
     {
       id: 'addPayment',
       title: 'Agregar Método de Pago',
@@ -79,33 +153,53 @@ export const WalletModal: React.FC<WalletModalProps> = ({ visible, onClose }) =>
     },
     {
       id: 'sendCoins',
-      title: 'Enviar BoomCoins',
-      description: 'Transferir a otros usuarios',
+      title: `Enviar ${tokenSymbol}`,
+      description: 'Transferir a otras direcciones',
       icon: 'arrow-up-circle-outline',
       color: '#10B981',
       onPress: () => {
+        if (!isWalletLoaded) {
+          Alert.alert('Error', 'Primero debes configurar tu wallet');
+          return;
+        }
         setTransferType('send');
         setShowTransfer(true);
       }
     },
     {
       id: 'receiveCoins',
-      title: 'Recibir BoomCoins',
-      description: 'Recibir de otros usuarios',
+      title: `Recibir ${tokenSymbol}`,
+      description: 'Mostrar tu dirección',
       icon: 'arrow-down-circle-outline',
       color: '#F59E0B',
       onPress: () => {
-        setTransferType('receive');
-        setShowTransfer(true);
+        if (!isWalletLoaded || !walletAddress) {
+          Alert.alert('Error', 'Primero debes configurar tu wallet');
+          return;
+        }
+        Alert.alert(
+          'Tu Dirección de Wallet',
+          walletAddress,
+          [
+            {
+              text: 'Copiar',
+              onPress: async () => {
+                await Clipboard.setStringAsync(walletAddress);
+                Alert.alert('¡Copiado!', 'Dirección copiada al portapapeles');
+              },
+            },
+            { text: 'Cerrar', style: 'cancel' },
+          ]
+        );
       }
     },
     {
-      id: 'history',
-      title: 'Historial',
-      description: 'Ver transacciones',
-      icon: 'time-outline',
+      id: 'refresh',
+      title: 'Actualizar Balance',
+      description: 'Refrescar saldo de blockchain',
+      icon: 'refresh-outline',
       color: '#8B5CF6',
-      onPress: () => console.log('Mostrar historial')
+      onPress: handleRefreshBalance
     }
   ];
 
@@ -124,99 +218,100 @@ export const WalletModal: React.FC<WalletModalProps> = ({ visible, onClose }) =>
               Mi Wallet
             </Text>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Ionicons name="close" size={24} color={colors.text} />
+              <Ionicons name="close" size={24} color={colors.text || '#1e293b'} />
             </TouchableOpacity>
           </View>
 
           <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
             {/* BoomCoins Balance Card */}
-            <View style={[styles.balanceCard, { backgroundColor: colors.accent }]}>
+            <View style={[styles.balanceCard, { backgroundColor: colors.accent || '#CCFF00' }]}>
               <View style={styles.balanceHeader}>
-                <Ionicons name="diamond" size={28} color="#000" />
+                <Ionicons name="diamond" size={28} color="#000000" />
                 <Text style={[styles.balanceTitle, { fontSize: 16 * fontScale }]}>
-                  BoomCoins Balance
+                  {tokenSymbol} Balance (Polygon)
                 </Text>
+                {isRefreshing && <ActivityIndicator size="small" color="#000" style={{ marginLeft: 8 }} />}
               </View>
               <Text style={[styles.balanceAmount, { fontSize: 32 * fontScale }]}>
                 {boomCoinsBalance.toLocaleString('es-ES', { 
                   minimumFractionDigits: 2, 
-                  maximumFractionDigits: 2 
-                })} BC
+                  maximumFractionDigits: 6 
+                })} {tokenSymbol}
               </Text>
               <View style={styles.boomIdContainer}>
                 <Text style={[styles.boomIdLabel, { fontSize: 12 * fontScale }]}>
-                  Tu BoomID:
+                  Tu Dirección Polygon:
                 </Text>
                 <View style={styles.boomIdRow}>
-                  <Text style={[styles.boomId, { fontSize: 14 * fontScale }]}>
-                    {userBoomId}
+                  <Text style={[styles.boomId, { fontSize: 12 * fontScale }]}>
+                    {walletAddress ? formatAddress(walletAddress) : 'No configurada'}
                   </Text>
                   <TouchableOpacity 
                     style={styles.copyButton}
                     onPress={async () => {
-                      await Clipboard.setStringAsync(userBoomId);
-                      Alert.alert('¡Copiado!', 'Tu BoomID ha sido copiado al portapapeles', [
-                        { text: 'OK', style: 'default' }
-                      ]);
+                      if (walletAddress) {
+                        await Clipboard.setStringAsync(walletAddress);
+                        Alert.alert('¡Copiado!', 'Dirección copiada al portapapeles', [
+                          { text: 'OK', style: 'default' }
+                        ]);
+                      }
                     }}
                   >
-                    <Ionicons name="copy-outline" size={16} color="#000" />
+                    <Ionicons name="copy-outline" size={16} color="#000000" />
                   </TouchableOpacity>
                 </View>
               </View>
             </View>
 
+            {/* MATIC Balance for Gas */}
+            {isWalletLoaded && (
+              <View style={[styles.gasBalanceCard, { backgroundColor: colors.surface || '#f8f9fa' }]}>
+                <View style={styles.gasBalanceRow}>
+                  <Ionicons name="flash" size={20} color={colors.text || '#1e293b'} />
+                  <Text style={[styles.gasBalanceLabel, { color: colors.textSecondary || '#64748b', fontSize: 14 * fontScale }]}>
+                    Balance MATIC (para gas):
+                  </Text>
+                  <Text style={[styles.gasBalanceAmount, { color: colors.text || '#1e293b', fontSize: 14 * fontScale }]}>
+                    {parseFloat(maticBalance).toFixed(4)} MATIC
+                  </Text>
+                </View>
+              </View>
+            )}
+
             {/* Payment Methods */}
-            <Text style={[styles.sectionTitle, { color: colors.text, fontSize: 18 * fontScale }]}>
-              Métodos de Pago
-            </Text>
-            
+            {paymentMethods.length > 0 && (
+              <>
+                <Text style={[styles.sectionTitle, { color: colors.text, fontSize: 18 * fontScale }]}>
+                  Métodos de Pago Adicionales
+                </Text>
+                
             {paymentMethods.map((method) => (
               <View key={method.id} style={[styles.paymentCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                {method.type === 'boomcoins' ? (
-                  <>
-                    <View style={styles.cardHeader}>
-                      <Ionicons name="diamond" size={24} color="#000" />
-                      <Text style={[styles.cardType, { color: colors.text, fontSize: 16 * fontScale }]}>
-                        BoomCoins Wallet
-                      </Text>
-                      {method.isDefault && (
-                        <View style={[styles.defaultBadge, { backgroundColor: colors.accent }]}>
-                          <Text style={[styles.defaultText, { fontSize: 10 * fontScale }]}>Principal</Text>
-                        </View>
-                      )}
+                <View style={styles.cardHeader}>
+                  <Ionicons 
+                    name={method.type === 'credit' ? "card" : "card-outline"} 
+                    size={24} 
+                    color={method.type === 'credit' ? '#FFD700' : '#C0C0C0'} 
+                  />
+                  <Text style={[styles.cardType, { color: colors.text, fontSize: 16 * fontScale }]}>
+                    {method.type === 'credit' ? 'Tarjeta de Crédito' : 'Tarjeta de Débito'}
+                  </Text>
+                  {method.isDefault && (
+                    <View style={[styles.defaultBadge, { backgroundColor: colors.accent }]}>
+                      <Text style={[styles.defaultText, { fontSize: 10 * fontScale }]}>Principal</Text>
                     </View>
-                    <Text style={[styles.cardBalance, { color: colors.text, fontSize: 20 * fontScale }]}>
-                      {method.balance?.toLocaleString('es-ES', { minimumFractionDigits: 2 })} BC
-                    </Text>
-                  </>
-                ) : (
-                  <>
-                    <View style={styles.cardHeader}>
-                      <Ionicons 
-                        name={method.type === 'credit' ? "card" : "card-outline"} 
-                        size={24} 
-                        color={method.type === 'credit' ? '#FFD700' : '#C0C0C0'} 
-                      />
-                      <Text style={[styles.cardType, { color: colors.text, fontSize: 16 * fontScale }]}>
-                        {method.type === 'credit' ? 'Tarjeta de Crédito' : 'Tarjeta de Débito'}
-                      </Text>
-                      {method.isDefault && (
-                        <View style={[styles.defaultBadge, { backgroundColor: colors.accent }]}>
-                          <Text style={[styles.defaultText, { fontSize: 10 * fontScale }]}>Principal</Text>
-                        </View>
-                      )}
-                    </View>
-                    <Text style={[styles.cardNumber, { color: colors.textSecondary, fontSize: 14 * fontScale }]}>
-                      {method.cardNumber}
-                    </Text>
-                    <Text style={[styles.cardName, { color: colors.text, fontSize: 12 * fontScale }]}>
-                      {method.cardName}
-                    </Text>
-                  </>
-                )}
+                  )}
+                </View>
+                <Text style={[styles.cardNumber, { color: colors.textSecondary, fontSize: 14 * fontScale }]}>
+                  {method.cardNumber}
+                </Text>
+                <Text style={[styles.cardName, { color: colors.text, fontSize: 12 * fontScale }]}>
+                  {method.cardName}
+                </Text>
               </View>
             ))}
+              </>
+            )}
 
             {/* Wallet Options */}
             <Text style={[styles.sectionTitle, { color: colors.text, fontSize: 18 * fontScale }]}>
@@ -240,7 +335,7 @@ export const WalletModal: React.FC<WalletModalProps> = ({ visible, onClose }) =>
                     {option.description}
                   </Text>
                 </View>
-                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary || '#64748b'} />
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -259,8 +354,13 @@ export const WalletModal: React.FC<WalletModalProps> = ({ visible, onClose }) =>
         visible={showTransfer}
         onClose={() => setShowTransfer(false)}
         currentBalance={boomCoinsBalance}
-        onTransfer={handleTransfer}
         type={transferType}
+      />
+
+      {/* Wallet Setup Modal */}
+      <WalletSetupModal
+        visible={showWalletSetup}
+        onClose={() => setShowWalletSetup(false)}
       />
     </Modal>
   );
@@ -405,5 +505,22 @@ const styles = StyleSheet.create({
   },
   optionDescription: {
     fontWeight: '400',
+  },
+  gasBalanceCard: {
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+  },
+  gasBalanceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  gasBalanceLabel: {
+    flex: 1,
+  },
+  gasBalanceAmount: {
+    fontWeight: '600',
+    fontFamily: 'monospace',
   },
 });

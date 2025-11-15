@@ -1,47 +1,69 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useRef, useState } from 'react';
-import { Alert, Animated, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import React, { useRef, useState, useEffect } from 'react';
+import { Alert, Animated, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useBlockchain } from '../../contexts/BlockchainContext';
 
 interface TransferModalProps {
   visible: boolean;
   onClose: () => void;
   currentBalance: number;
-  onTransfer: (amount: number, recipient: string) => void;
   type: 'send' | 'receive';
 }
 
 /**
- * Modal para enviar/recibir BoomCoins
- * Incluye búsqueda de usuarios por BoomID y validación de montos
+ * Modal para enviar BoomCoins en Polygon blockchain
+ * Valida direcciones Ethereum y ejecuta transacciones on-chain
  */
 export const TransferModal: React.FC<TransferModalProps> = ({ 
   visible, 
   onClose, 
   currentBalance, 
-  onTransfer, 
   type 
 }) => {
   const { colors, fontScale } = useTheme();
+  const { transferTokens, isValidAddress, estimateGas, tokenSymbol, refreshBalances } = useBlockchain();
   
   const [recipient, setRecipient] = useState('');
   const [amount, setAmount] = useState('');
-  const [isValidUser, setIsValidUser] = useState<boolean | null>(null);
+  const [isValidAddress_, setIsValidAddress_] = useState<boolean | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [gasEstimate, setGasEstimate] = useState<string | null>(null);
+  const [isEstimating, setIsEstimating] = useState(false);
   
   const pulseAnimation = useRef(new Animated.Value(1)).current;
 
-  // Simulación de usuarios válidos
-  const validUsers = [
-    'BC7A9F2E8D1C5B40', 'BC4E7D9A2F8C1B56', 'BC8F2A5D7C9E1B34',
-    'BC1D6E8A3F7B9C25', 'BC9C3F7A1E5D8B42', 'BC2A8D5E9F1C7B63'
-  ];
-
-  const validateUser = (userId: string) => {
-    const isValid = validUsers.includes(userId.toUpperCase());
-    setIsValidUser(isValid);
+  // Validar dirección Ethereum
+  const validateAddress = (address: string) => {
+    if (!address) {
+      setIsValidAddress_(null);
+      return false;
+    }
+    const isValid = isValidAddress(address);
+    setIsValidAddress_(isValid);
     return isValid;
   };
+
+  // Estimar gas cuando cambian recipient o amount
+  useEffect(() => {
+    if (type === 'send' && recipient && amount && isValidAddress_) {
+      const estimateGasCost = async () => {
+        setIsEstimating(true);
+        try {
+          const estimate = await estimateGas(recipient, amount);
+          setGasEstimate(estimate.estimatedCost);
+        } catch {
+          setGasEstimate(null);
+        } finally {
+          setIsEstimating(false);
+        }
+      };
+      const timeoutId = setTimeout(estimateGasCost, 500);
+      return () => clearTimeout(timeoutId);
+    } else {
+      setGasEstimate(null);
+    }
+  }, [recipient, amount, isValidAddress_, type, estimateGas]);
 
   const formatAmount = (text: string) => {
     const cleaned = text.replace(/[^\d.]/g, '');
@@ -49,8 +71,8 @@ export const TransferModal: React.FC<TransferModalProps> = ({
     if (parts.length > 2) {
       return parts[0] + '.' + parts.slice(1).join('');
     }
-    if (parts[1] && parts[1].length > 2) {
-      return parts[0] + '.' + parts[1].slice(0, 2);
+    if (parts[1] && parts[1].length > 6) {
+      return parts[0] + '.' + parts[1].slice(0, 6);
     }
     return cleaned;
   };
@@ -74,12 +96,12 @@ export const TransferModal: React.FC<TransferModalProps> = ({
     const transferAmount = parseFloat(amount);
     
     if (!recipient) {
-      Alert.alert('Error', 'Ingresa el BoomID del destinatario');
+      Alert.alert('Error', 'Ingresa la dirección del destinatario');
       return;
     }
     
-    if (!validateUser(recipient)) {
-      Alert.alert('Error', 'Usuario no encontrado o BoomID inválido');
+    if (!validateAddress(recipient)) {
+      Alert.alert('Error', 'Dirección inválida. Debe ser una dirección Ethereum válida (0x...)');
       return;
     }
     
@@ -96,33 +118,70 @@ export const TransferModal: React.FC<TransferModalProps> = ({
     setIsProcessing(true);
     startPulseAnimation();
 
-    // Simular procesamiento
-    setTimeout(() => {
-      onTransfer(transferAmount, recipient);
-      setIsProcessing(false);
+    try {
+      const result = await transferTokens(recipient, amount);
+      
+      // Esperar un poco para que se actualice el balance
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      await refreshBalances();
       
       // Reset form
       setRecipient('');
       setAmount('');
-      setIsValidUser(null);
+      setIsValidAddress_(null);
+      setGasEstimate(null);
       
       Alert.alert(
-        'Transferencia Exitosa',
-        `${type === 'send' ? 'Enviaste' : 'Recibiste'} ${transferAmount} BC ${type === 'send' ? 'a' : 'de'} ${recipient}`,
+        '¡Transferencia Exitosa!',
+        `Se enviaron ${transferAmount} ${tokenSymbol} a ${recipient.substring(0, 6)}...${recipient.substring(recipient.length - 4)}\n\nHash de transacción: ${result.hash.substring(0, 10)}...`,
         [{ text: 'OK', onPress: onClose }]
       );
-    }, 2000);
+    } catch (error: any) {
+      Alert.alert('Error en la Transferencia', error.message || 'No se pudo completar la transferencia');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
-  const getUserIcon = () => {
-    if (isValidUser === null) return 'person-outline';
-    return isValidUser ? 'person-circle' : 'person-remove';
+  const getAddressIcon = () => {
+    if (isValidAddress_ === null) return 'wallet-outline';
+    return isValidAddress_ ? 'checkmark-circle' : 'close-circle';
   };
 
-  const getUserIconColor = () => {
-    if (isValidUser === null) return colors.textSecondary;
-    return isValidUser ? '#4CAF50' : '#F44336';
+  const getAddressIconColor = () => {
+    if (isValidAddress_ === null) return colors.textSecondary;
+    return isValidAddress_ ? '#4CAF50' : '#F44336';
   };
+
+  // Solo mostrar para envío, no para recepción
+  if (type === 'receive') {
+    return (
+      <Modal
+        visible={visible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={onClose}
+      >
+        <View style={[styles.overlay, { backgroundColor: 'rgba(0, 0, 0, 0.5)' }]}>
+          <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <View style={[styles.header, { borderBottomColor: colors.border }]}>
+              <Text style={[styles.title, { color: colors.text, fontSize: 20 * fontScale }]}>
+                Recibir {tokenSymbol}
+              </Text>
+              <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+                <Ionicons name="close" size={24} color={colors.text || '#1e293b'} />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.content}>
+              <Text style={[styles.infoText, { color: colors.textSecondary || '#64748b', fontSize: 14 * fontScale }]}>
+                Para recibir {tokenSymbol}, comparte tu dirección de wallet desde el menú principal de la wallet.
+              </Text>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    );
+  }
 
   return (
     <Modal
@@ -136,14 +195,14 @@ export const TransferModal: React.FC<TransferModalProps> = ({
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <View style={[styles.overlay, { backgroundColor: 'rgba(0, 0, 0, 0.5)' }]}>
-          <View style={[styles.container, { backgroundColor: colors.background }]}>
+          <View style={[styles.container, { backgroundColor: colors.background || '#ffffff' }]}>
             {/* Header */}
-            <View style={[styles.header, { borderBottomColor: colors.border }]}>
-              <Text style={[styles.title, { color: colors.text, fontSize: 20 * fontScale }]}>
-                {type === 'send' ? 'Enviar BoomCoins' : 'Recibir BoomCoins'}
+            <View style={[styles.header, { borderBottomColor: colors.border || '#e2e8f0' }]}>
+              <Text style={[styles.title, { color: colors.text || '#1e293b', fontSize: 20 * fontScale }]}>
+                Enviar {tokenSymbol}
               </Text>
               <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                <Ionicons name="close" size={24} color={colors.text} />
+                <Ionicons name="close" size={24} color={colors.text || '#1e293b'} />
               </TouchableOpacity>
             </View>
 
@@ -176,7 +235,7 @@ export const TransferModal: React.FC<TransferModalProps> = ({
               {/* Recipient */}
               <View style={styles.inputContainer}>
                 <Text style={[styles.label, { color: colors.text, fontSize: 14 * fontScale }]}>
-                  {type === 'send' ? 'Destinatario (BoomID)' : 'Remitente (BoomID)'}
+                  Dirección del Destinatario
                 </Text>
                 <View style={styles.inputRow}>
                   <TextInput
@@ -185,40 +244,37 @@ export const TransferModal: React.FC<TransferModalProps> = ({
                       { 
                         backgroundColor: colors.surface, 
                         color: colors.text, 
-                        borderColor: isValidUser === false ? '#F44336' : colors.border,
-                        fontSize: 16 * fontScale 
+                        borderColor: isValidAddress_ === false ? '#F44336' : colors.border,
+                        fontSize: 12 * fontScale,
+                        fontFamily: 'monospace',
                       }
                     ]}
-                    placeholder="BC7A9F2E8D1C5B40"
+                    placeholder="0x..."
                     placeholderTextColor={colors.textSecondary}
                     value={recipient}
                     onChangeText={(text) => {
-                      setRecipient(text.toUpperCase());
-                      if (text.length === 16) {
-                        validateUser(text);
-                      } else {
-                        setIsValidUser(null);
-                      }
+                      setRecipient(text);
+                      validateAddress(text);
                     }}
-                    autoCapitalize="characters"
-                    maxLength={16}
+                    autoCapitalize="none"
+                    autoCorrect={false}
                   />
                   <View style={styles.userIcon}>
                     <Ionicons 
-                      name={getUserIcon()} 
+                      name={getAddressIcon()} 
                       size={20} 
-                      color={getUserIconColor()} 
+                      color={getAddressIconColor()} 
                     />
                   </View>
                 </View>
-                {isValidUser === false && (
+                {isValidAddress_ === false && (
                   <Text style={[styles.errorText, { fontSize: 12 * fontScale }]}>
-                    Usuario no encontrado
+                    Dirección inválida
                   </Text>
                 )}
-                {isValidUser === true && (
+                {isValidAddress_ === true && (
                   <Text style={[styles.successText, { fontSize: 12 * fontScale }]}>
-                    Usuario válido ✓
+                    Dirección válida ✓
                   </Text>
                 )}
               </View>
@@ -226,7 +282,7 @@ export const TransferModal: React.FC<TransferModalProps> = ({
               {/* Amount */}
               <View style={styles.inputContainer}>
                 <Text style={[styles.label, { color: colors.text, fontSize: 14 * fontScale }]}>
-                  Cantidad (BC)
+                  Cantidad ({tokenSymbol})
                 </Text>
                 <TextInput
                   style={[
@@ -248,34 +304,51 @@ export const TransferModal: React.FC<TransferModalProps> = ({
                   autoFocus={false}
                   selectionColor={colors.accent}
                 />
-                {type === 'send' && amount && parseFloat(amount) > currentBalance && (
+                {amount && parseFloat(amount) > currentBalance && (
                   <Text style={[styles.errorText, { fontSize: 12 * fontScale }]}>
                     Saldo insuficiente
                   </Text>
                 )}
               </View>
 
-              {/* Quick Amount Buttons (solo para envío) */}
-              {type === 'send' && (
-                <View style={styles.quickAmounts}>
-                  <Text style={[styles.label, { color: colors.text, fontSize: 14 * fontScale }]}>
-                    Cantidades rápidas:
+              {/* Gas Estimate */}
+              {gasEstimate && (
+                <View style={[styles.gasEstimateBox, { backgroundColor: colors.surface || '#f8f9fa' }]}>
+                  <Ionicons name="flash" size={16} color={colors.textSecondary || '#64748b'} />
+                  <Text style={[styles.gasEstimateText, { color: colors.textSecondary || '#64748b', fontSize: 12 * fontScale }]}>
+                    Costo estimado de gas: ~{parseFloat(gasEstimate).toFixed(6)} MATIC
                   </Text>
-                  <View style={styles.quickAmountButtons}>
-                    {[10, 50, 100, currentBalance / 2].map((quickAmount, index) => (
-                      <TouchableOpacity
-                        key={index}
-                        style={[styles.quickAmountButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
-                        onPress={() => setAmount(quickAmount.toFixed(2))}
-                      >
-                        <Text style={[styles.quickAmountText, { color: colors.text, fontSize: 12 * fontScale }]}>
-                          {index === 3 ? '50%' : `${quickAmount} BC`}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
                 </View>
               )}
+
+              {isEstimating && (
+                <View style={[styles.gasEstimateBox, { backgroundColor: colors.surface || '#f8f9fa' }]}>
+                  <ActivityIndicator size="small" color={colors.textSecondary || '#64748b'} />
+                  <Text style={[styles.gasEstimateText, { color: colors.textSecondary || '#64748b', fontSize: 12 * fontScale }]}>
+                    Estimando gas...
+                  </Text>
+                </View>
+              )}
+
+              {/* Quick Amount Buttons */}
+              <View style={styles.quickAmounts}>
+                <Text style={[styles.label, { color: colors.text, fontSize: 14 * fontScale }]}>
+                  Cantidades rápidas:
+                </Text>
+                <View style={styles.quickAmountButtons}>
+                  {[10, 50, 100, currentBalance / 2].map((quickAmount, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={[styles.quickAmountButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                      onPress={() => setAmount(Math.min(quickAmount, currentBalance).toFixed(2))}
+                    >
+                      <Text style={[styles.quickAmountText, { color: colors.text, fontSize: 12 * fontScale }]}>
+                        {index === 3 ? '50%' : `${quickAmount}`}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
 
               {/* Transfer Button */}
               <TouchableOpacity
@@ -290,12 +363,15 @@ export const TransferModal: React.FC<TransferModalProps> = ({
                 disabled={isProcessing}
               >
                 {isProcessing ? (
-                  <Text style={[styles.transferButtonText, { fontSize: 16 * fontScale }]}>
-                    Procesando...
-                  </Text>
+                  <>
+                    <ActivityIndicator size="small" color="#000" />
+                    <Text style={[styles.transferButtonText, { fontSize: 16 * fontScale, marginLeft: 8 }]}>
+                      Enviando transacción...
+                    </Text>
+                  </>
                 ) : (
                   <Text style={[styles.transferButtonText, { fontSize: 16 * fontScale }]}>
-                    {type === 'send' ? 'Enviar BoomCoins' : 'Confirmar Recepción'}
+                    Enviar {tokenSymbol}
                   </Text>
                 )}
               </TouchableOpacity>
@@ -413,13 +489,30 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   transferButton: {
+    flexDirection: 'row',
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
+    justifyContent: 'center',
     marginTop: 10,
   },
   transferButtonText: {
     color: '#000',
     fontWeight: 'bold',
+  },
+  gasEstimateBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 8,
+    gap: 8,
+  },
+  gasEstimateText: {
+    flex: 1,
+  },
+  infoText: {
+    textAlign: 'center',
+    padding: 20,
+    lineHeight: 22,
   },
 });
